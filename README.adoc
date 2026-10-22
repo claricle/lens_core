@@ -1,0 +1,18 @@
+= LensCore
+
+LensCore is a small, dependency-free model for conformance diagnostics: one
+report shape that any format checker can emit, with machine-readable (JSON,
+YAML) and human-readable output rendered from the same model.
+
+Each diagnostic records:
+
+* what is wrong (`kind`);
+* how serious it is (`severity`);
+* where it is: line and column for text formats, byte offset and record for
+  binary ones;
+* which rule of which specification or profile it breaks.
+
+== Status
+
+Under development. The v1 schema is not frozen yet; until it is, depend on
+this repository's `main` branch.

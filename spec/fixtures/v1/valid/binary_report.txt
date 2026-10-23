@@ -1,0 +1,11 @@
+example-binary-lens 0.4.2, profile example-binary-profile
+INVALID: 1 error, 1 warning, 0 infos
+
+error  BIN-CRC-001  (bad_checksum)
+  at byte offset 0, length 4, record 0, HDR
+  Record checksum does not match.
+  context: {"actual":"0x0BADF00D","expected":"0xDEADBEEF"}
+
+warning  BIN-LEN-002  (future_kind_example)
+  at byte offset 128, record 3
+  Record is shorter than recommended.

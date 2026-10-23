@@ -1,0 +1,7 @@
+schema_version: 1
+producer: &p {name: n, version: v}
+profile: {id: p, citations: []}
+valid: true
+summary: {errors: 0, warnings: 0, infos: 0}
+diagnostics: []
+alias: *p

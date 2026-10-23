@@ -1,0 +1,49 @@
+---
+schema_version: 1
+producer:
+  name: example-xml-lens
+  version: 2.1.0
+profile:
+  id: example-xml-profile
+  citations:
+  - uri: https://example.org/specs/xml-profile/1.0
+    label: Example XML Profile 1.0
+timestamp: '2026-10-23T09:30:00Z'
+valid: false
+summary:
+  errors: 1
+  warnings: 1
+  infos: 1
+diagnostics:
+- severity: error
+  kind: disallowed_element
+  requirement_id: XML-ELEM-003
+  message: Element <script> is not allowed.
+  citations:
+  - uri: https://example.org/specs/xml-profile/1.0#elements
+    label: Section 4.2
+  remediation: Remove the <script> element.
+  context:
+    element: script
+    parent: svg
+  location:
+    type: xml
+    line: 12
+    column: 5
+    path: "/svg/script"
+- severity: warning
+  kind: deprecated_attribute
+  requirement_id: XML-ATTR-017
+  message: Attribute xlink:href is deprecated.
+  citations: []
+  context: {}
+  location:
+    type: xml
+    line: 20
+    path: "/svg/use[1]"
+- severity: info
+  kind: note
+  requirement_id: XML-NOTE-001
+  message: Document uses the default namespace.
+  citations: []
+  context: {}

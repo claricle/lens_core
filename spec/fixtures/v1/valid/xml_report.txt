@@ -1,0 +1,17 @@
+example-xml-lens 2.1.0, profile example-xml-profile
+Checked at 2026-10-23T09:30:00Z
+INVALID: 1 error, 1 warning, 1 info
+
+error  XML-ELEM-003  (disallowed_element)
+  at line 12, column 5, /svg/script
+  Element <script> is not allowed.
+  fix: Remove the <script> element.
+  see: Section 4.2 https://example.org/specs/xml-profile/1.0#elements
+  context: {"element":"script","parent":"svg"}
+
+warning  XML-ATTR-017  (deprecated_attribute)
+  at line 20, /svg/use[1]
+  Attribute xlink:href is deprecated.
+
+info  XML-NOTE-001  (note)
+  Document uses the default namespace.

@@ -1,0 +1,212 @@
+= LensCore diagnostics, schema version 1
+:toc:
+
+This document is the prose half of the diagnostics wire format. The machine
+half is `schemas/lens-diagnostics-v1.json` (JSON Schema 2020-12). The Ruby
+model in `lib/lens_core/` implements both. Where they differ, the difference
+is listed under <<beyond-schema>>.
+
+The gem version (`LensCore::VERSION`) and the schema version
+(`LensCore::SCHEMA_VERSION`, also `LensCore::Schema.version`) are separate
+constants. A host that embeds LensCore should report both.
+
+== Document shape
+
+A report is one JSON (or YAML) object. Members appear in the order shown.
+
+[cols="2,1,4",options="header"]
+|===
+| Member | Required | Meaning
+
+| `schema_version` | yes | The integer `1`. Written without a fraction.
+| `producer` | yes | The tool that made the report: `name`, `version`
+(non-empty strings).
+| `profile` | yes | The rule set checked against: `id` (non-empty string) and
+`citations` (array, may be empty).
+| `timestamp` | no | When the check ran, if the caller says so. RFC 3339 with an
+explicit offset. See <<timestamps>>.
+| `valid` | yes | Boolean verdict, stated by the producer.
+| `summary` | yes | `errors`, `warnings`, `infos`: integers derived from
+`diagnostics`.
+| `diagnostics` | yes | Array of diagnostics, in the producer's order (may be
+empty).
+|===
+
+=== Diagnostic
+
+[cols="2,1,4",options="header"]
+|===
+| Member | Required | Meaning
+
+| `severity` | yes | `error`, `warning` or `info`.
+| `kind` | yes | Non-empty string naming the sort of finding. Open
+vocabulary: see <<compatibility>>.
+| `requirement_id` | yes | Non-empty string identifying the requirement, stable
+across releases of the producer.
+| `message` | yes | Non-empty human-readable text. May contain newlines.
+| `citations` | no | Array of citations; `[]` when absent.
+| `remediation` | no | Non-empty text saying how to fix it.
+| `context` | no | JSON object of supporting values; `{}` when absent.
+| `location` | no | A location. Absent when the finding has no place.
+|===
+
+=== Citation
+
+`uri` (required): an absolute URI, that is a scheme followed by `:` and
+non-whitespace text (`https://...`, `urn:...`). `label` (optional): a
+non-empty human name for the cited text.
+
+=== Location
+
+`type` is required and is `xml` or `binary`. The other members are
+coordinates, all optional; a coordinate that is unknown is left out.
+
+[cols="1,2,4",options="header"]
+|===
+| Type | Member | Meaning
+
+| `xml` | `line` | Integer >= 1.
+| `xml` | `column` | Integer >= 1.
+| `xml` | `path` | Non-empty string, e.g. an element path.
+| `binary` | `byte_offset` | Integer >= 0.
+| `binary` | `byte_length` | Integer >= 0.
+| `binary` | `record_index` | Integer >= 0, counting from zero.
+| `binary` | `record_type` | Non-empty string.
+|===
+
+A coordinate that belongs to the other type (`line` on a `binary` location) is
+a schema violation. The two types are format-neutral examples; neither implies
+that any particular lens uses this gem.
+
+[[compatibility]]
+== Compatibility
+
+* A document whose `schema_version` is any integer other than the one this gem
+  implements is rejected with `LensCore::UnsupportedVersionError`. A
+  `schema_version` that is not an integer is a `LensCore::SchemaError`.
+* Within version 1, producers may add to a report. Consumers must accept:
+  - new `kind` values;
+  - additional (unknown) members on any object: the report, `producer`,
+    `profile`, a diagnostic, a citation, a location.
+* The Ruby model keeps unknown members as _extensions_ and writes them back
+  after the standard members (see <<ordering>>). The one exception is
+  `summary`: its counts are derived, so any other member inside it is ignored
+  and not written back.
+* Removing a member, changing a member's meaning or type, or adding a new
+  `severity` or location `type` is a new schema version.
+* Integers must be written as integers (`3`, not `3.0` or `3e0`). JSON Schema
+  validators treat `3.0` as an integer; LensCore does not.
+
+[[omission]]
+== Omission and null
+
+* An optional member that has no value is omitted. `null` is never a valid
+  value for a standard member; a document that contains one is a
+  `SchemaError`. (Extension members and values inside `context` may be `null`
+  like any JSON value.)
+* `citations` (on a diagnostic) and `context` read as `[]` and `{}` when
+  absent. The renderers always write them, so canonical output has them.
+* `timestamp`, `remediation` and `location` are written only when present.
+* Location coordinates are never defaulted. A zero is written only when the
+  coordinate is really zero.
+
+[[ordering]]
+== Ordering and canonical form
+
+* `diagnostics` keep the order given by the producer. Nothing sorts them.
+* Standard members appear in the order of the tables above: report members as
+  `schema_version`, `producer`, `profile`, `timestamp`, `valid`, `summary`,
+  `diagnostics`; diagnostic members as `severity`, `kind`, `requirement_id`,
+  `message`, `citations`, `remediation`, `context`, `location`.
+* Extension members follow the standard members, sorted lexically by bytes.
+* Keys inside `context` and inside extension values are sorted lexically, at
+  every depth.
+* `summary` is computed from the diagnostics: one count per severity.
+* Canonical JSON is `JSON.pretty_generate` output (two-space indent) plus one
+  final newline. Parsing canonical JSON and rendering it again returns the same
+  bytes. Non-canonical JSON (other key order, other spacing) parses to the same
+  model and renders in canonical form.
+* YAML carries the same content with the same key order, rendered with
+  `YAML.dump` and unbounded line width.
+
+[[timestamps]]
+== Timestamps
+
+LensCore never reads the clock. A `timestamp` appears only when the caller
+supplies one, as a `Time` or an RFC 3339 string with an explicit offset
+(`Z` or `+hh:mm`). It is rendered in UTC with a `Z` suffix, with sub-second
+digits only when there are some (`2026-10-23T10:00:00Z`,
+`2026-10-23T10:00:00.25Z`). A string without an offset is rejected rather
+than guessed at.
+
+In YAML, quote the timestamp (the renderer does). An unquoted RFC 3339
+timestamp is also accepted, in the `timestamp` member only.
+
+== Validity
+
+`valid` is the producer's verdict, because policy (do warnings fail a
+document?) belongs to the producer. One rule is fixed: `valid` cannot be
+`true` when the report contains an `error`.
+
+== Text and encoding
+
+* Documents are UTF-8. The parsers accept a String tagged UTF-8, US-ASCII or
+  binary and read its bytes as UTF-8; a String in any other encoding is
+  rejected, not transcoded.
+* A byte order mark is rejected.
+* Every string in a report, including object keys, must be valid UTF-8.
+
+== Renderers
+
+JSON::
+  `LensCore::Renderers::Json.render(report)`: canonical JSON.
+YAML::
+  `LensCore::Renderers::Yaml.render(report)`: canonical YAML.
+Human::
+  `LensCore::Renderers::Human.render(report)`: plain text with no colour or
+  wrapping. A header line (producer, profile, the timestamp if present), a
+  `VALID`/`INVALID` line with the three counts, then one block per diagnostic
+  in order, showing severity, requirement ID, kind, location (present
+  coordinates only), message, remediation, citations and context. It is meant
+  for reading, not parsing.
+
+All three show every diagnostic of every severity.
+
+== Parsers and failures
+
+`LensCore::Parsers::Json.parse(text)` and `LensCore::Parsers::Yaml.parse(text)`
+return a `LensCore::Report` or raise a subclass of `LensCore::Error`:
+
+[cols="2,4",options="header"]
+|===
+| Error class | Raised when
+
+| `LensCore::ParseError` | The text is not well-formed JSON or YAML, is not a
+String, or starts with a byte order mark.
+| `LensCore::UnsafeYamlError` | The YAML uses an object tag, a symbol, or an
+anchor/alias.
+| `LensCore::InvalidEncodingError` | The input, or a string inside it, is not
+valid UTF-8, or the input is a String in another encoding.
+| `LensCore::UnsupportedVersionError` | `schema_version` is an integer other
+than 1.
+| `LensCore::SchemaError` | The document is well-formed but breaks the schema.
+`error.path` is the list of keys and indexes to the offending member;
+`error.message` renders it, e.g. `diagnostics[1].location.line: must be >= 1`.
+|===
+
+The same `SchemaError` and `InvalidEncodingError` are raised when a value
+object is built directly in Ruby with bad arguments.
+
+[[beyond-schema]]
+== Rules beyond JSON Schema
+
+JSON Schema validation alone accepts documents that LensCore rejects:
+
+* `summary` counts must equal the number of diagnostics of each severity.
+  JSON Schema cannot count array items by property.
+* Integer-valued numbers written with a fraction (`3.0`).
+* Unsafe YAML constructs and invalid UTF-8, which are rejected before a
+  schema applies.
+
+The schema does enforce that `valid: true` goes with `summary.errors` equal to
+zero.

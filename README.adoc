@@ -12,7 +12,48 @@ Each diagnostic records:
   binary ones;
 * which rule of which specification or profile it breaks.
 
+== Usage
+
+[source,ruby]
+----
+require "lens_core"
+
+report = LensCore::Report.new(
+  producer: LensCore::Producer.new(name: "my-checker", version: "1.0.0"),
+  profile: LensCore::Profile.new(id: "my-profile"),
+  valid: false,
+  diagnostics: [
+    LensCore::Diagnostic.new(
+      severity: "error", kind: "bad_checksum", requirement_id: "REC-001",
+      message: "Record checksum does not match.",
+      location: LensCore::Location.binary(byte_offset: 0, record_index: 0)
+    )
+  ]
+)
+
+puts LensCore::Renderers::Json.render(report)
+puts LensCore::Renderers::Human.render(report)
+
+report = LensCore::Parsers::Json.parse(File.binread("report.json"))
+----
+
+Parsers and renderers are `LensCore::Parsers::Json`, `Parsers::Yaml` and
+`LensCore::Renderers::Json`, `Renderers::Yaml`, `Renderers::Human`. Failures
+are subclasses of `LensCore::Error`.
+
+== Schema
+
+The format is documented in link:docs/diagnostics-v1.adoc[docs/diagnostics-v1.adoc]
+and specified by `schemas/lens-diagnostics-v1.json` (also at
+`LensCore::Schema::PATH`). The gem version is `LensCore::VERSION`; the schema
+version is `LensCore::SCHEMA_VERSION` (`1`).
+
 == Status
 
 Under development. The v1 schema is not frozen yet; until it is, depend on
 this repository's `main` branch.
+
+== License
+
+The gem is available as open source under the terms of the BSD 2-Clause
+License.

@@ -76,7 +76,7 @@ RSpec.describe LensCore::Parsers do
         .to raise_error(LensCore::UnsupportedVersionError, /schema_version 2/)
     end
 
-    it "raises UnsafeYamlError for object tags, symbols and anchors" do
+    it "raises UnsafeYamlError for object tags, symbols and aliases" do
       expect { yaml.parse(fixture("invalid/unsafe_tag.yaml")) }.to raise_error(LensCore::UnsafeYamlError)
       expect do
         yaml.parse(fixture("invalid/unsafe_anchor.yaml"))
@@ -166,6 +166,33 @@ RSpec.describe LensCore::Parsers do
       expect(yaml.parse(text).timestamp).to eq(Time.utc(2026, 10, 23, 9, 30))
     end
 
+    it "rejects an unquoted timestamp that is not in the RFC 3339 form" do
+      %w[2026-10-23T09:30:00+0000 2026-10-23T09:30:00 2026-10-23].each do |bad|
+        text = fixture("valid/xml_report.yaml")
+          .sub("'2026-10-23T09:30:00Z'", bad)
+
+        expect { yaml.parse(text) }
+          .to raise_error(LensCore::Error, /timestamp/), bad
+      end
+    end
+
+    it "rejects impossible dates in an unquoted or quoted timestamp" do
+      ["2026-02-29T10:00:00Z", "'2026-10-23T24:00:00Z'"].each do |bad|
+        text = fixture("valid/xml_report.yaml")
+          .sub("'2026-10-23T09:30:00Z'", bad)
+
+        expect { yaml.parse(text) }
+          .to raise_error(LensCore::SchemaError, /timestamp/), bad
+      end
+    end
+
+    it "raises UnsafeYamlError for an explicit Time object tag" do
+      text = fixture("valid/xml_report.yaml")
+        .sub("'2026-10-23T09:30:00Z'", "!ruby/object:Time {}")
+
+      expect { yaml.parse(text) }.to raise_error(LensCore::UnsafeYamlError)
+    end
+
     it "does not accept a timestamp-shaped scalar as a string elsewhere" do
       text = fixture("valid/minimal_report.yaml")
         .sub("name: min", "name: 2026-10-23T09:30:00Z")
@@ -174,6 +201,24 @@ RSpec.describe LensCore::Parsers do
         yaml.parse(text)
       end.to raise_error(LensCore::SchemaError,
                          /producer\.name: must be a string/)
+    end
+  end
+
+  describe "YAML anchors" do
+    it "accepts an anchor declaration that no alias uses" do
+      text = fixture("valid/minimal_report.yaml")
+        .sub("producer:\n  name: min\n  version: '1'",
+             "producer: &p\n  name: min\n  version: '1'")
+
+      expect(yaml.parse(text).producer.name).to eq("min")
+    end
+
+    it "documents aliases, not anchors, as the rejected construct" do
+      doc = File.read(File.expand_path("../../docs/diagnostics-v1.adoc",
+                                       __dir__))
+
+      expect(doc).to match(/object tag, a symbol, or an\s+alias/)
+      expect(doc).not_to include("anchor/alias")
     end
   end
 

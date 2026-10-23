@@ -184,7 +184,7 @@ return a `LensCore::Report` or raise a subclass of `LensCore::Error`:
 | `LensCore::ParseError` | The text is not well-formed JSON or YAML, is not a
 String, or starts with a byte order mark.
 | `LensCore::UnsafeYamlError` | The YAML uses an object tag, a symbol, or an
-anchor/alias.
+alias. Anchor declarations that nothing aliases are harmless and accepted.
 | `LensCore::InvalidEncodingError` | The input, or a string inside it, is not
 valid UTF-8, or the input is a String in another encoding.
 | `LensCore::UnsupportedVersionError` | `schema_version` is an integer other

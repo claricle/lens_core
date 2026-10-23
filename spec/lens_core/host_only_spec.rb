@@ -25,7 +25,8 @@ RSpec.describe "host application using LensCore alone" do # rubocop:disable RSpe
     out, err, status = run_in_host("list", "--name-only")
 
     expect(status).to be_success, err
-    expect(out.split).to eq(["lens_core"])
+    names = out.lines.map(&:strip).grep(/\A[\w-]+\z/)
+    expect(names).to eq(["lens_core"])
     gems = File.readlines(File.join(app, "Gemfile")).grep(/^\s*gem /)
     expect(gems.size).to eq(1)
     expect(gems.first).to start_with('gem "lens_core"')

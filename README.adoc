@@ -50,8 +50,11 @@ version is `LensCore::SCHEMA_VERSION` (`1`).
 
 == Status
 
-Under development. The v1 schema is not frozen yet; until it is, depend on
-this repository's `main` branch.
+The v1 contract is a ready-to-tag candidate: the schema, model, renderers and
+the golden corpus (`spec/fixtures/v1/golden`) are pinned by SHA-256 in
+`spec/fixtures/v1/golden/manifest.yml`. Nothing is tagged or published yet.
+Adopt it by pinning an exact commit, never a branch; a host application that
+needs only LensCore is shown in `spec/fixtures/host_app`.
 
 == License
 

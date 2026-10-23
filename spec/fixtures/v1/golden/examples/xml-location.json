@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "producer": {
+    "name": "example-xml-lens",
+    "version": "1.0.0"
+  },
+  "profile": {
+    "id": "example-xml-profile",
+    "citations": [
+      {
+        "uri": "https://example.org/specs/xml-profile/1.0",
+        "label": "Example XML Profile 1.0"
+      }
+    ]
+  },
+  "valid": false,
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "infos": 0
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "missing_attribute",
+      "requirement_id": "XML-ATTR-001",
+      "message": "Element is missing the required attribute.",
+      "citations": [
+        {
+          "uri": "https://example.org/specs/xml-profile/1.0#attributes"
+        }
+      ],
+      "remediation": "Add the required attribute.",
+      "context": {
+        "attribute": "id",
+        "element": "item"
+      },
+      "location": {
+        "type": "xml",
+        "line": 12,
+        "column": 4,
+        "path": "/root/item[2]"
+      }
+    }
+  ]
+}

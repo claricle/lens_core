@@ -210,3 +210,28 @@ JSON Schema validation alone accepts documents that LensCore rejects:
 
 The schema does enforce that `valid: true` goes with `summary.errors` equal to
 zero.
+
+== Golden corpus
+
+`spec/fixtures/v1/golden` holds canonical v1 reports that every release must
+parse and render byte for byte, and that validate against the schema.
+`manifest.yml` records, for each file, its SHA-256, producer and version,
+schema version, source fixture and the LensCore contract commit used to render
+it; SVG exports also record the exact svg_conform commit. The schema's own
+SHA-256 is recorded too. Goldens omit timestamps.
+
+* `svg_conform/` holds three real exports: an SVG 1.1 CSS grammar error, an
+  SVG 2 secure-static external reference, and a four-channel report (error,
+  validity error, warning, info).
+* `examples/` holds format-neutral examples of the two location forms. The
+  binary example is a contract example only; it is not evidence of any PNG,
+  EMF or PostScript implementation.
+
+`ruby -Ilib script/refresh_svg_goldens PATH_TO_SVG_CONFORM` regenerates the
+three SVG files and their hashes. It refuses a checkout whose HEAD is not the
+commit named in the manifest, canonicalizes through LensCore, and writes only
+inside this repository.
+
+`spec/fixtures/host_app` is a minimal application whose bundle contains only
+LensCore. `bundle exec ruby read_reports.rb DIRECTORY` reads every report in a
+directory and prints profile, counts and locations.

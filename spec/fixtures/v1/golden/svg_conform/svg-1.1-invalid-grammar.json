@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "producer": {
+    "name": "svg_conform",
+    "version": "0.2.4"
+  },
+  "profile": {
+    "id": "svg_1_1_full_static",
+    "citations": [
+      {
+        "uri": "https://www.w3.org/TR/2011/REC-SVG11-20110816/",
+        "label": "Scalable Vector Graphics (SVG) 1.1 (Second Edition)"
+      }
+    ]
+  },
+  "valid": false,
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "infos": 0
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "style_violation",
+      "requirement_id": "svg11.document.css2",
+      "message": "CSS 2 grammar in style attribute on 'rect': block opened here is missing '}' (line 1, column 7)",
+      "citations": [
+        {
+          "uri": "https://www.w3.org/TR/2008/REC-CSS2-20080411/grammar.html",
+          "label": "CSS 2 grammar"
+        }
+      ],
+      "remediation": "Promote style properties to attributes",
+      "context": {
+        "affects_content": false,
+        "data": {
+          "citation": "https://www.w3.org/TR/2008/REC-CSS2-20080411/grammar.html",
+          "line": 3
+        },
+        "fixable": false,
+        "remediable": true,
+        "remediation_confidence": "automatic",
+        "remediation_type": "promote"
+      }
+    }
+  ],
+  "file": "spec/fixtures/profiles/svg_1_1_full_static/invalid/css-grammar.svg"
+}

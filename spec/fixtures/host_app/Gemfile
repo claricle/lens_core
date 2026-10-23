@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+# A host application that depends on LensCore alone: no svg_conform, no
+# other lens, no gem outside Ruby's standard library.
+source "https://rubygems.org"
+
+gem "lens_core", path: "../../.."

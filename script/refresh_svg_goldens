@@ -1,0 +1,123 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Regenerates the three svg_conform goldens (and their manifest hashes) from
+# a local svg_conform checkout. Usage:
+#
+#   ruby -Ilib script/refresh_svg_goldens PATH_TO_SVG_CONFORM
+#
+# The checkout must be at the commit the manifest names and must have its
+# bundle installed. This script never clones, fetches or publishes, and
+# writes only the three SVG golden files and the manifest in this repository.
+
+require "json"
+require "yaml"
+require "digest"
+require "open3"
+require "bundler"
+require "lens_core"
+
+ROOT = File.expand_path("..", __dir__)
+GOLDEN_DIR = File.join(ROOT, "spec/fixtures/v1/golden")
+MANIFEST = File.join(GOLDEN_DIR, "manifest.yml")
+
+# Runs inside the svg_conform bundle and prints {golden path => report JSON}.
+EXPORT = <<~RUBY
+  require "svg_conform"
+  require "json"
+
+  def file_report(profile_name, path)
+    profile = SvgConform::Profiles.get(profile_name)
+    result = profile.validate(SvgConform::Document.from_file(path))
+    SvgConform::Diagnostics::LensCoreAdapter.call(result, filename: path)
+  end
+
+  def four_channel_report
+    profile = SvgConform::Profiles.get("svg_1_1_full_static")
+    node = Struct.new(:line, :column, :name, :path_id).new(3, 5, "rect", "/svg/rect[1]")
+    context = SvgConform::ValidationContext.new(nil, profile)
+    context.add_error(node: node, message: "CSS 2 grammar error",
+                      requirement_id: "svg11.document.css2")
+    context.add_error(node: node, message: "Reference to a missing id",
+                      requirement_id: "id_reference", severity: :validity_error)
+    context.add_warning(rule: Struct.new(:id).new("svg11.example.warning"),
+                        node: node, message: "A warning")
+    context.add_notice(rule: nil, node: node, message: "An informational note",
+                       requirement_id: "svg11.example.notice")
+    result = SvgConform::ValidationResult.new(nil, profile, context)
+    SvgConform::Diagnostics::LensCoreAdapter.call(result)
+  end
+
+  sources = JSON.parse(ARGV.fetch(0))
+  out = sources.to_h do |golden, source|
+    report = if source["kind"] == "file"
+               file_report(source["profile"], source["fixture"])
+             else
+               four_channel_report
+             end
+    [golden, LensCore::Renderers::Json.render(report)]
+  end
+  puts JSON.generate(out)
+RUBY
+
+def fail_with(message)
+  warn "refresh_svg_goldens: #{message}"
+  exit 1
+end
+
+def svg_entries(manifest)
+  manifest.fetch("goldens").select { |g| g.key?("svg_conform_commit") }
+end
+
+def check_checkout(path, expected)
+  fail_with("not a directory: #{path}") unless File.directory?(path)
+  head, status = Open3.capture2("git", "rev-parse", "HEAD", chdir: path)
+  fail_with("#{path} is not a git checkout") unless status.success?
+  head = head.strip
+  unless head == expected
+    fail_with("checkout HEAD is #{head}, but the manifest expects #{expected}")
+  end
+
+  dirty, = Open3.capture2("git", "status", "--porcelain",
+                          "--untracked-files=no", chdir: path)
+  fail_with("tracked files are modified in #{path}") unless dirty.strip.empty?
+end
+
+def export(path, entries)
+  sources = entries.to_h { |e| [e["path"], e.fetch("export")] }
+  out, err, status = Bundler.with_unbundled_env do
+    Open3.capture3("bundle", "exec", "ruby", "-e", EXPORT,
+                   JSON.generate(sources), chdir: path)
+  end
+  fail_with("svg_conform export failed:\n#{err}") unless status.success?
+
+  JSON.parse(out.lines.last)
+end
+
+def canonical(text)
+  LensCore::Renderers::Json.render(LensCore::Parsers::Json.parse(text))
+end
+
+checkout = ARGV.fetch(0) do
+  fail_with("usage: refresh_svg_goldens SVG_CONFORM_PATH")
+end
+checkout = File.expand_path(checkout)
+manifest = YAML.safe_load_file(MANIFEST)
+entries = svg_entries(manifest)
+expected = entries.map { |e| e["svg_conform_commit"] }.uniq
+unless expected.size == 1
+  fail_with("manifest must name exactly one svg_conform commit")
+end
+
+check_checkout(checkout, expected.first)
+exported = export(checkout, entries)
+entries.each do |entry|
+  text = canonical(exported.fetch(entry["path"]))
+  report = LensCore::Parsers::Json.parse(text)
+  fail_with("golden must omit its timestamp") if report.timestamp
+  File.binwrite(File.join(GOLDEN_DIR, entry["path"]), text)
+  entry["sha256"] = Digest::SHA256.hexdigest(text)
+  entry["producer_version"] = report.producer.version
+  puts "#{entry['path']} #{entry['sha256']}"
+end
+File.write(MANIFEST, YAML.dump(manifest))

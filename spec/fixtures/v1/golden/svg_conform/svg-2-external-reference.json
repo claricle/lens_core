@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "producer": {
+    "name": "svg_conform",
+    "version": "0.2.4"
+  },
+  "profile": {
+    "id": "svg_2_secure_static",
+    "citations": [
+      {
+        "uri": "https://www.w3.org/TR/2026/CR-SVG2-20261006/",
+        "label": "Scalable Vector Graphics (SVG) 2, Candidate Recommendation 6 October 2026"
+      }
+    ]
+  },
+  "valid": false,
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "infos": 0
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "reference_violation",
+      "requirement_id": "svg2.secure_static.external_reference",
+      "message": "External reference not allowed in href: 'http://example.com/a.png' (network resource is not allowed)",
+      "citations": [
+        {
+          "uri": "https://www.w3.org/TR/2026/CR-SVG2-20261006/conform.html#secure-static-mode",
+          "label": "SVG 2 CR, secure static mode"
+        }
+      ],
+      "remediation": "Remove broken reference or containing element",
+      "context": {
+        "affects_content": true,
+        "data": {
+          "attribute": "href",
+          "citation": "https://www.w3.org/TR/2026/CR-SVG2-20261006/conform.html#secure-static-mode",
+          "reason": "network resource is not allowed",
+          "reference_type": "ExternalUrlReference"
+        },
+        "element": "image",
+        "fixable": false,
+        "remediable": true,
+        "remediation_confidence": "safe_removal",
+        "remediation_type": "remove"
+      }
+    }
+  ],
+  "file": "spec/fixtures/profiles/svg_2_secure_static/invalid/http.svg"
+}

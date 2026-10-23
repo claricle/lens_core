@@ -27,6 +27,6 @@ Gem::Specification.new do |spec|
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = all_files_in_git
-    .reject { |f| f.match(%r{\A(?:(?:test|spec|features|bin)/|\.)}) }
+    .reject { |f| f.match(%r{\A(?:(?:test|spec|features|bin|script)/|\.)}) }
   spec.require_paths = ["lib"]
 end

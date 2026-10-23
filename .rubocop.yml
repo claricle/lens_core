@@ -23,3 +23,8 @@ RSpec/MultipleExpectations:
 
 Layout/EndOfLine:
   EnforcedStyle: lf
+
+# The fixture host app is a standalone program; it prints its report.
+RSpec/Output:
+  Exclude:
+    - spec/fixtures/host_app/**/*

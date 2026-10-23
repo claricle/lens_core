@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "producer": {
+    "name": "svg_conform",
+    "version": "0.2.4"
+  },
+  "profile": {
+    "id": "svg_1_1_full_static",
+    "citations": [
+      {
+        "uri": "https://www.w3.org/TR/2011/REC-SVG11-20110816/",
+        "label": "Scalable Vector Graphics (SVG) 1.1 (Second Edition)"
+      }
+    ]
+  },
+  "valid": false,
+  "summary": {
+    "errors": 2,
+    "warnings": 1,
+    "infos": 1
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "validation",
+      "requirement_id": "svg11.document.css2",
+      "message": "CSS 2 grammar error",
+      "citations": [
+        {
+          "uri": "https://www.w3.org/TR/2008/REC-CSS2-20080411/grammar.html",
+          "label": "CSS 2 grammar"
+        }
+      ],
+      "remediation": "Apply available remediation",
+      "context": {
+        "affects_content": false,
+        "element": "rect",
+        "fixable": false,
+        "remediable": true,
+        "remediation_confidence": "manual_review",
+        "remediation_type": "unknown"
+      },
+      "location": {
+        "type": "xml",
+        "line": 3,
+        "column": 5,
+        "path": "/svg/rect[1]"
+      }
+    },
+    {
+      "severity": "error",
+      "kind": "validity",
+      "requirement_id": "id_reference",
+      "message": "Reference to a missing id",
+      "citations": [],
+      "remediation": "Remove broken reference or containing element",
+      "context": {
+        "affects_content": true,
+        "element": "rect",
+        "fixable": false,
+        "remediable": true,
+        "remediation_confidence": "safe_removal",
+        "remediation_type": "remove"
+      },
+      "location": {
+        "type": "xml",
+        "line": 3,
+        "column": 5,
+        "path": "/svg/rect[1]"
+      }
+    },
+    {
+      "severity": "warning",
+      "kind": "validation",
+      "requirement_id": "svg11.example.warning",
+      "message": "A warning",
+      "citations": [],
+      "remediation": "Apply available remediation",
+      "context": {
+        "affects_content": false,
+        "element": "rect",
+        "fixable": false,
+        "remediable": true,
+        "remediation_confidence": "manual_review",
+        "remediation_type": "unknown"
+      },
+      "location": {
+        "type": "xml",
+        "line": 3,
+        "column": 5,
+        "path": "/svg/rect[1]"
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "notice",
+      "requirement_id": "svg11.example.notice",
+      "message": "An informational note",
+      "citations": [],
+      "context": {
+        "element": "rect"
+      },
+      "location": {
+        "type": "xml",
+        "line": 3,
+        "column": 5,
+        "path": "/svg/rect[1]"
+      }
+    }
+  ]
+}

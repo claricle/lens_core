@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "producer": {
+    "name": "example-binary-lens",
+    "version": "1.0.0"
+  },
+  "profile": {
+    "id": "example-binary-profile",
+    "citations": [
+      {
+        "uri": "https://example.org/specs/binary-format/3"
+      }
+    ]
+  },
+  "valid": false,
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "infos": 1
+  },
+  "diagnostics": [
+    {
+      "severity": "error",
+      "kind": "bad_checksum",
+      "requirement_id": "BIN-CRC-001",
+      "message": "Record checksum does not match.",
+      "citations": [],
+      "context": {
+        "actual": "0x0BADF00D",
+        "expected": "0xDEADBEEF"
+      },
+      "location": {
+        "type": "binary",
+        "byte_offset": 64,
+        "byte_length": 4,
+        "record_index": 2,
+        "record_type": "HDR"
+      }
+    },
+    {
+      "severity": "info",
+      "kind": "padding_note",
+      "requirement_id": "BIN-PAD-003",
+      "message": "Trailing padding was ignored.",
+      "citations": [],
+      "context": {},
+      "location": {
+        "type": "binary",
+        "byte_offset": 128
+      }
+    }
+  ]
+}

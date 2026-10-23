@@ -1,0 +1,58 @@
+---
+manifest_version: 1
+schema:
+  path: schemas/lens-diagnostics-v1.json
+  sha256: 90f0976166aaa88417d3eec59cab8288e085b89230a9521e431169acb3e87cba
+  schema_version: 1
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
+goldens:
+- path: svg_conform/svg-1.1-invalid-grammar.json
+  sha256: 83dd5c609378f1dbf7369262a90be012a923cf9556b49c28d0b48f34da54492b
+  producer: svg_conform
+  producer_version: 0.2.4
+  schema_version: 1
+  source: spec/fixtures/profiles/svg_1_1_full_static/invalid/css-grammar.svg
+  svg_conform_commit: 5bf0f80af2a80bb5fd9f8a68cc95e470ae43e5d0
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
+  export:
+    kind: file
+    profile: svg_1_1_full_static
+    fixture: spec/fixtures/profiles/svg_1_1_full_static/invalid/css-grammar.svg
+- path: svg_conform/svg-2-external-reference.json
+  sha256: bad5d5ba04ec951efaca17456afabd53fd261158f6dcae8e5b7736c58db53274
+  producer: svg_conform
+  producer_version: 0.2.4
+  schema_version: 1
+  source: spec/fixtures/profiles/svg_2_secure_static/invalid/http.svg
+  svg_conform_commit: 5bf0f80af2a80bb5fd9f8a68cc95e470ae43e5d0
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
+  export:
+    kind: file
+    profile: svg_2_secure_static
+    fixture: spec/fixtures/profiles/svg_2_secure_static/invalid/http.svg
+- path: svg_conform/svg-four-channel-library.json
+  sha256: 705d784cfac763b74c6d240dcc55bf01b68e84068ee59461706bc93415573a9f
+  producer: svg_conform
+  producer_version: 0.2.4
+  schema_version: 1
+  source: spec/svg_conform/diagnostics/lens_core_adapter_spec.rb (four-channel result
+    built through SvgConform::ValidationContext)
+  svg_conform_commit: 5bf0f80af2a80bb5fd9f8a68cc95e470ae43e5d0
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
+  export:
+    kind: four_channel
+- path: examples/xml-location.json
+  sha256: 36be7984ef522c06f99c16542c3ec9a831fb48397acc9e820f0688a37cb31a49
+  producer: example-xml-lens
+  producer_version: 1.0.0
+  schema_version: 1
+  source: hand-written format-neutral example (xml location form)
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
+- path: examples/binary-location.json
+  sha256: dcf60bf873f89df25c3adfa80a45248957e0b0bc22096fca8f4476314d8670bd
+  producer: example-binary-lens
+  producer_version: 1.0.0
+  schema_version: 1
+  source: hand-written format-neutral contract example (binary location form); not
+    PNG, EMF or PostScript evidence
+  lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c

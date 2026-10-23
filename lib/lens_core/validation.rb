@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "date"
 require "time"
 
 module LensCore
@@ -8,8 +9,11 @@ module LensCore
   # `name` is a member name or a path (Array) to one; errors carry it.
   module Validation
     ABSOLUTE_URI = /\A[A-Za-z][A-Za-z0-9+.-]*:\S+\z/
-    TIMESTAMP = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?
-                 (Z|[+-]\d{2}:\d{2})\z/x
+    TIMESTAMP = /\A(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})T
+                 (?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})(?:\.\d+)?
+                 (?:Z|[+-](?<off_hour>\d{2}):(?<off_minute>\d{2}))\z/x
+    CLOCK_LIMITS = { "hour" => 23, "minute" => 59, "second" => 59,
+                     "off_hour" => 23, "off_minute" => 59 }.freeze
     TEXT_ENCODINGS = [Encoding::UTF_8, Encoding::US_ASCII].freeze
 
     module_function
@@ -84,11 +88,21 @@ module LensCore
       return value.dup.utc.freeze if value.is_a?(Time)
 
       string(value, name)
-      return Time.iso8601(value).utc.freeze if TIMESTAMP.match?(value)
+      return Time.iso8601(value).utc.freeze if rfc3339?(value)
 
       fail_at("must be an RFC 3339 timestamp", name)
     rescue ArgumentError
       fail_at("must be an RFC 3339 timestamp", name)
+    end
+
+    # The lexical form plus real calendar and clock values, so Time never
+    # rolls an impossible date or hour 24 over into the next day.
+    def rfc3339?(value)
+      match = TIMESTAMP.match(value) or return false
+      part = match.named_captures.transform_values(&:to_i)
+
+      Date.valid_date?(part["year"], part["month"], part["day"]) &&
+        CLOCK_LIMITS.all? { |key, max| part[key] <= max }
     end
 
     def text(value, name)

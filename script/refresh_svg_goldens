@@ -9,6 +9,9 @@
 # The checkout must be at the commit the manifest names and must have its
 # bundle installed. This script never clones, fetches or publishes, and
 # writes only the three SVG golden files and the manifest in this repository.
+# The manifest must name exactly those three files; every destination is
+# checked to resolve inside the golden directory, and all content is
+# generated before the first file is written.
 
 require "json"
 require "yaml"
@@ -20,6 +23,11 @@ require "lens_core"
 ROOT = File.expand_path("..", __dir__)
 GOLDEN_DIR = File.join(ROOT, "spec/fixtures/v1/golden")
 MANIFEST = File.join(GOLDEN_DIR, "manifest.yml")
+SVG_GOLDENS = %w[
+  svg_conform/svg-1.1-invalid-grammar.json
+  svg_conform/svg-2-external-reference.json
+  svg_conform/svg-four-channel-library.json
+].freeze
 
 # Runs inside the svg_conform bundle and prints {golden path => report JSON}.
 EXPORT = <<~RUBY
@@ -69,6 +77,31 @@ def svg_entries(manifest)
   manifest.fetch("goldens").select { |g| g.key?("svg_conform_commit") }
 end
 
+# The only paths this script may write: exactly SVG_GOLDENS, each a regular
+# location whose real parent directory lies inside the golden directory.
+def destinations(entries)
+  paths = entries.map { |e| e["path"] }
+  unless paths.sort == SVG_GOLDENS.sort
+    fail_with("manifest paths must be exactly #{SVG_GOLDENS.join(', ')}")
+  end
+
+  root = File.realpath(GOLDEN_DIR)
+  entries.to_h { |e| [e["path"], contained(root, e["path"])] }
+end
+
+def contained(root, path)
+  target = File.join(GOLDEN_DIR, path)
+  parent = File.realpath(File.dirname(target))
+  unless parent == root || parent.start_with?("#{root}#{File::SEPARATOR}")
+    fail_with("manifest path escapes the golden directory: #{path}")
+  end
+  fail_with("manifest path is a symlink: #{path}") if File.symlink?(target)
+
+  target
+rescue SystemCallError
+  fail_with("manifest path directory is missing: #{path}")
+end
+
 def check_checkout(path, expected)
   fail_with("not a directory: #{path}") unless File.directory?(path)
   head, status = Open3.capture2("git", "rev-parse", "HEAD", chdir: path)
@@ -109,13 +142,17 @@ unless expected.size == 1
   fail_with("manifest must name exactly one svg_conform commit")
 end
 
+targets = destinations(entries)
 check_checkout(checkout, expected.first)
 exported = export(checkout, entries)
-entries.each do |entry|
+generated = entries.map do |entry|
   text = canonical(exported.fetch(entry["path"]))
   report = LensCore::Parsers::Json.parse(text)
   fail_with("golden must omit its timestamp") if report.timestamp
-  File.binwrite(File.join(GOLDEN_DIR, entry["path"]), text)
+  [entry, text, report]
+end
+generated.each do |entry, text, report|
+  File.binwrite(targets.fetch(entry["path"]), text)
   entry["sha256"] = Digest::SHA256.hexdigest(text)
   entry["producer_version"] = report.producer.version
   puts "#{entry['path']} #{entry['sha256']}"

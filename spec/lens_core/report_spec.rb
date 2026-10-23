@@ -103,6 +103,24 @@ RSpec.describe LensCore::Report do
     end
   end
 
+  describe "timestamp components" do
+    it "rejects values RFC 3339 does not allow instead of normalizing them" do
+      ["2026-02-29T10:00:00Z", "2026-10-23T24:00:00Z",
+       "2026-10-23T10:60:00Z", "2026-10-23T10:00:60Z", "2026-04-31T10:00:00Z",
+       "2026-10-23T10:00:00+24:00", "2026-10-23T10:00:00+01:60"].each do |bad|
+        expect { report(timestamp: bad) }
+          .to raise_error(LensCore::SchemaError, /timestamp/), bad
+      end
+    end
+
+    it "keeps real leap days and boundary values" do
+      expect(report(timestamp: "2028-02-29T23:59:59Z").to_h["timestamp"])
+        .to eq("2028-02-29T23:59:59Z")
+      expect(report(timestamp: "2026-10-23T00:00:00-23:59").to_h["timestamp"])
+        .to eq("2026-10-23T23:59:00Z")
+    end
+  end
+
   describe "validity" do
     it "cannot be true while an error is present" do
       expect { report(valid: true, diagnostics: [diagnostic("error")]) }

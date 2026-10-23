@@ -2,7 +2,7 @@
 manifest_version: 1
 schema:
   path: schemas/lens-diagnostics-v1.json
-  sha256: 90f0976166aaa88417d3eec59cab8288e085b89230a9521e431169acb3e87cba
+  sha256: 0d85dceace563056ec4f817b4a5f10d59bfbf16d2c3d0bab6360b6e0cfeeb176
   schema_version: 1
   lens_core_contract_commit: 98c21c82bc97e3c8c4038048acdcec4a177c5f7c
 goldens:

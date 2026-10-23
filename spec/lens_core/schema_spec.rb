@@ -112,6 +112,10 @@ RSpec.describe LensCore::Schema do
         "timestamp without offset" => ->(d) {
           d["timestamp"] = "2026-10-23T09:30:00"
         },
+        "impossible calendar date" => ->(d) {
+          d["timestamp"] = "2026-02-29T10:00:00Z"
+        },
+        "hour 24" => ->(d) { d["timestamp"] = "2026-10-23T24:00:00Z" },
         "diagnostics not an array" => ->(d) { d["diagnostics"] = {} },
         "unknown severity" => ->(d) {
           d["diagnostics"][0]["severity"] = "fatal"
